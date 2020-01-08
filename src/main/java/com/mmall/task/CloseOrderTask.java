@@ -71,20 +71,20 @@ public class CloseOrderTask {
         // 2.出现了死锁
         else {
             String lockValueStr = RedisShardedPoolUtil.get(Const.REDIS_LOCK.CLOSE_ORDER_TASK_LOCK);
-            //锁还存在 并且 确认是死锁(第一轮判断，判断是否为死锁)
+            //锁还存在 并且 确认是死锁
             if (lockValueStr != null && System.currentTimeMillis() > Long.parseLong(lockValueStr)) {
-                //重置一把新锁
+                //重置一把新锁（有key重置返回老值，要不就set返回null）
                 String getSetResult = RedisShardedPoolUtil.getSet(Const.REDIS_LOCK.CLOSE_ORDER_TASK_LOCK, String.valueOf(System.currentTimeMillis() + lockTimeout));
-                //如果其它进程删除了死锁 或者 本线程重置了锁（第二轮判断，多个进程同时清除死锁）
+                //1.本进程删除死锁，重置死锁的新锁。2.业务流程
+                //1.其它进程删除死锁，重置死锁的新锁，且新锁还在有效期内。2.本进程重置其它进程的新锁。3.再见
+                //1.其它进程删除死锁，重置死锁的新锁，且新锁已经释放。2.业务流程
                 if (getSetResult == null || (getSetResult != null && StringUtils.equals(lockValueStr, getSetResult))) {
                     //开始给新锁设置上消失倒计时，开始做业务
                     closeOrder(Const.REDIS_LOCK.CLOSE_ORDER_TASK_LOCK);
                 } else {
                     log.info("没有获取到分布式锁:{}", Const.REDIS_LOCK.CLOSE_ORDER_TASK_LOCK);
                 }
-            }
-            //正常情况（其它线程已经清除锁 或者 锁还在有效期内）
-            else {
+            } else {
                 log.info("没有获取到分布式锁:{}", Const.REDIS_LOCK.CLOSE_ORDER_TASK_LOCK);
             }
         }
@@ -99,7 +99,7 @@ public class CloseOrderTask {
             if (getLock = lock.tryLock(0, 50, TimeUnit.SECONDS)) {
                 log.info("Redisson获取到分布式锁:{},ThreadName:{}", Const.REDIS_LOCK.CLOSE_ORDER_TASK_LOCK, Thread.currentThread().getName());
                 int hour = Integer.parseInt(PropertiesUtil.getProperty("close.order.task.time.hour", "2"));
-//                iOrderService.closeOrder(hour);
+                iOrderService.closeOrder(hour);
             } else {
                 log.info("Redisson没有获取到分布式锁:{},ThreadName:{}", Const.REDIS_LOCK.CLOSE_ORDER_TASK_LOCK, Thread.currentThread().getName());
             }
