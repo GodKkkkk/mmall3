@@ -7,13 +7,11 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/**
- * Created by geely
- */
 @Slf4j
 public class CookieUtil {
 
-    private final static String COOKIE_DOMAIN = ".happymmall.com";
+    //private final static String COOKIE_DOMAIN = "127.0.0.1";
+    private final static String COOKIE_DOMAIN = "www.tiancaikai.xyz";
     private final static String COOKIE_NAME = "mmall_login_token";
 
 

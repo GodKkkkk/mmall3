@@ -207,6 +207,7 @@ public class ProductServiceImpl implements IProductService {
             keyword = new StringBuilder().append("%").append(keyword).append("%").toString();
         }
 
+        // pageNum是请求的第几页，pageSize是这一页有多少个product产品
         PageHelper.startPage(pageNum, pageSize);
         //排序处理
         if (StringUtils.isNotBlank(orderBy)) {
